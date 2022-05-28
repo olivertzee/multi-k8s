@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t olivertzee/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true olivertzee/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t olivertzee/multi-client ./client
+  - docker build -t olivertzee/multi-nginx ./nginx
+  - docker build -t olivertzee/multi-server ./server
+  - docker build -t olivertzee/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push olivertzee/multi-client
+  - docker push olivertzee/multi-nginx
+  - docker push olivertzee/multi-server
+  - docker push olivertzee/multi-worker
